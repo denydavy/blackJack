@@ -1,4 +1,4 @@
 blackJack
 =========
 
-Coursera's week 6 mini project
+Week 6 mini project for "An Introduction to interactive programming in Python" course on
