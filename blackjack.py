@@ -1,6 +1,6 @@
-# Mini-project #6 - Blackjack
+# Mini-project #6 - Blackjack a.k.a "Sorry if my BlackJack logo caused your eyes to melt"
 
-import simpleguitk as simplegui
+import simplegui
 import random
 
 # load card sprite - 936x384 - source: jfitz.com
@@ -67,12 +67,20 @@ class Hand:
         # compute the value of the hand, see Blackjack video
         value = 0
         for n in self.card_list:
-            value += VALUES[n.rank]
+            if n.rank != 'A':
+                value += VALUES[n.rank]
+            else:
+                if value + 10 <= 21:
+                    value += VALUES[n.rank] + 10
+                else:
+                    value += VALUES[n.rank]
         return value
-    
+           
     def draw(self, canvas, pos):
-        pass	# draw a hand on the canvas, use the draw method for cards
- 
+        # draw a hand on the canvas, use the draw method for cards
+        for card in self.card_list:
+            card.draw(canvas,pos)
+            pos[0] += 105
         
 # define deck class 
 class Deck:
@@ -97,9 +105,9 @@ class Deck:
 
 #define event handlers for buttons
 def deal():
-    global outcome, in_play,player,dealer, current_deck
-
+    global outcome, in_play,player,dealer, current_deck, locked,score
     # your code goes here
+    outcome = "Hit or stand?"
     current_deck = Deck()
     current_deck.shuffle()
     player = Hand()
@@ -108,37 +116,47 @@ def deal():
     player.add_card(current_deck.deal_card())
     dealer.add_card(current_deck.deal_card())
     dealer.add_card(current_deck.deal_card())
-    print "player's cards:",player," . Value: ",player.get_value(),"\n","dealer's cards:",dealer," . Value: ",dealer.get_value()
+    #print "player's cards:",player," . Value: ",player.get_value(),"\n","dealer's cards:",dealer," . Value: ",dealer.get_value()
+    if in_play:
+        score -= 1
     in_play = True
-
+    locked = False
+    
+    
 def hit():
     # replace with your code below
-    global player, dealer, current_deck
+    global player, dealer, current_deck,outcome, locked
     # if the hand is in play, hit the player
-    if player.get_value() <= 21:
-        player.add_card(current_deck.deal_card())
-        print player.get_value()
-    else:
-        print "You're busted!"
-    # if busted, assign a message to outcome, update in_play and score
+    if not locked:
+        if player.get_value() <= 21:
+            player.add_card(current_deck.deal_card())
+        else:
+            outcome = "You're busted! New deal?"
+        
+        # if busted, assign a message to outcome, update in_play and score
        
 def stand():
-    global player, dealer, current_deck, outcome, score
+    global player, dealer, current_deck, outcome, score, in_play, locked
     # replace with your code below
-    if player.get_value() > 21:
-        outcome = "You're busted!"
-    else:
-        while dealer.get_value() <= 17:
-            dealer.add_card(current_deck.deal_card())
-            print dealer.get_value()
-        if dealer.get_value() > 21:
-            outcome = "Dealer's busted!"
+    in_play = False
+    if not locked:
+        if player.get_value() > 21:
+            outcome = "You're busted! New deal?"
+            score -= 1
         else:
-            if player.get_value() > dealer.get_value():
-                outcome = "Player wins!"
+            while dealer.get_value() <= 17:
+                dealer.add_card(current_deck.deal_card())
+            if dealer.get_value() > 21:
+                outcome = "Dealer's busted! New deal?"
+                score += 1
             else:
-                outcome = "Dealer wins!"
-    print outcome
+                if player.get_value() > dealer.get_value():
+                    outcome = "Player win! New deal?"
+                    score += 1
+                else:
+                    outcome = "Dealer win! New deal?"
+                    score -= 1
+        locked = True
     # if hand is in play, repeatedly hit dealer until his hand has value 17 or more
 
     # assign a message to outcome, update in_play and score
@@ -146,11 +164,16 @@ def stand():
 # draw handler    
 def draw(canvas):
     # test to make sure that card.draw works, replace with your code below
+    global player, dealer
+    player.draw(canvas,[50,400])
+    dealer.draw(canvas,[50,150])
+    color = random.choice(["Red","Green","Blue","Yellow","Orange","Lime","Cyan","Gray","White"])
+    canvas.draw_text("BlackJack",(50,50),36,color,"serif")
+    canvas.draw_text(outcome,(200,330),24,"White")
+    canvas.draw_text("Score : "+str(score),(400,50),36,"White")
+    if in_play:
+        canvas.draw_image(card_back,CARD_BACK_CENTER,CARD_BACK_SIZE,[50+CARD_BACK_CENTER[0],150+CARD_BACK_CENTER[1]],CARD_BACK_SIZE)
     
-    card = Card("S", "A")
-    card.draw(canvas, [300, 300])
-
-
 # initialization frame
 frame = simplegui.create_frame("Blackjack", 600, 600)
 frame.set_canvas_background("Green")
@@ -165,6 +188,3 @@ frame.set_draw_handler(draw)
 # get things rolling
 deal()
 frame.start()
-
-
-# remember to review the gradic rubric
